@@ -21,6 +21,7 @@ beforeAll(async () => {
 beforeEach(() => {
   vi.useRealTimers();
   runEmbeddedAttemptMock.mockReset();
+  runEmbeddedAttemptMock.mockResolvedValue(makeAttempt({}));
 });
 
 const baseUsage = {
@@ -132,7 +133,7 @@ describe("runEmbeddedPiAgent auth profile rotation", () => {
             assistantTexts: [],
             lastAssistant: buildAssistant({
               stopReason: "error",
-              errorMessage: "rate limit",
+              errorMessage: "unauthorized",
             }),
           }),
         )
@@ -185,7 +186,7 @@ describe("runEmbeddedPiAgent auth profile rotation", () => {
           assistantTexts: [],
           lastAssistant: buildAssistant({
             stopReason: "error",
-            errorMessage: "rate limit",
+            errorMessage: "unauthorized",
           }),
         }),
       );
@@ -505,11 +506,10 @@ describe("runEmbeddedPiAgent auth profile rotation", () => {
           .mockResolvedValueOnce(
             makeAttempt({
               assistantTexts: [],
-              lastAssistant: buildAssistant({
-                stopReason: "error",
-                errorMessage: "rate limit",
-              }),
-            }),
+                          lastAssistant: buildAssistant({
+                            stopReason: "error",
+                            errorMessage: "unauthorized",
+                          }),            }),
           )
           .mockResolvedValueOnce(
             makeAttempt({

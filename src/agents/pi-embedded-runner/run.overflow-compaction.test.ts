@@ -144,6 +144,7 @@ vi.mock("../pi-embedded-helpers.js", async () => {
     parseImageDimensionError: vi.fn(() => null),
     isRateLimitErrorMessage: vi.fn(() => false),
     isOverloadedErrorMessage: vi.fn(() => false),
+    parseImageSizeError: vi.fn(() => null),
   };
 });
 
@@ -189,6 +190,7 @@ const baseParams = {
 describe("overflow compaction in run loop", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockedRunEmbeddedAttempt.mockResolvedValue(makeAttemptResult());
   });
 
   it("retries after successful compaction on context overflow promptError", async () => {
