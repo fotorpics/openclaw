@@ -102,16 +102,6 @@ function parseArgs(args: string[]): AcpServerOptions {
       i += 1;
       continue;
     }
-    if (arg === "--token" || arg === "--gateway-token") {
-      opts.gatewayToken = args[i + 1];
-      i += 1;
-      continue;
-    }
-    if (arg === "--password" || arg === "--gateway-password") {
-      opts.gatewayPassword = args[i + 1];
-      i += 1;
-      continue;
-    }
     if (arg === "--session") {
       opts.defaultSessionKey = args[i + 1];
       i += 1;
@@ -153,8 +143,6 @@ Gateway-backed ACP server for IDE integration.
 
 Options:
   --url <url>             Gateway WebSocket URL
-  --token <token>         Gateway auth token
-  --password <password>   Gateway auth password
   --session <key>         Default session key (e.g. "agent:main:main")
   --session-label <label> Default session label to resolve
   --require-existing      Fail if the session key/label does not exist
@@ -162,6 +150,10 @@ Options:
   --no-prefix-cwd         Do not prefix prompts with the working directory
   --verbose, -v           Verbose logging to stderr
   --help, -h              Show this help message
+
+Authentication (set in environment or configuration):
+  OPENCLAW_GATEWAY_TOKEN     Gateway auth token
+  OPENCLAW_GATEWAY_PASSWORD  Gateway auth password
 `);
 }
 

@@ -33,6 +33,7 @@ import {
 import { readBool, readNumber, readString } from "./meta.js";
 import { parseSessionMeta, resetSessionIfNeeded, resolveSessionKey } from "./session-mapper.js";
 import { defaultAcpSessionStore, type AcpSessionStore } from "./session.js";
+import { shortenHomePath } from "../utils.js";
 import { ACP_AGENT_INFO, type AcpServerOptions } from "./types.js";
 
 type PendingPrompt = {
@@ -241,7 +242,8 @@ export class AcpGatewayAgent implements Agent {
     const userText = extractTextFromPrompt(params.prompt);
     const attachments = extractAttachmentsFromPrompt(params.prompt);
     const prefixCwd = meta.prefixCwd ?? this.opts.prefixCwd ?? true;
-    const message = prefixCwd ? `[Working directory: ${session.cwd}]\n\n${userText}` : userText;
+    const displayCwd = shortenHomePath(session.cwd);
+    const message = prefixCwd ? `[Working directory: ${displayCwd}]\n\n${userText}` : userText;
 
     return new Promise<PromptResponse>((resolve, reject) => {
       this.pendingPrompts.set(params.sessionId, {
