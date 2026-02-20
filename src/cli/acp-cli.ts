@@ -11,8 +11,6 @@ export function registerAcpCli(program: Command) {
 
   acp
     .option("--url <url>", "Gateway WebSocket URL (defaults to gateway.remote.url when configured)")
-    .option("--token <token>", "Gateway token (if required)")
-    .option("--password <password>", "Gateway password (if required)")
     .option("--session <key>", "Default session key (e.g. agent:main:main)")
     .option("--session-label <label>", "Default session label to resolve")
     .option("--require-existing", "Fail if the session key/label does not exist", false)
@@ -27,8 +25,6 @@ export function registerAcpCli(program: Command) {
       try {
         await serveAcpGateway({
           gatewayUrl: opts.url as string | undefined,
-          gatewayToken: opts.token as string | undefined,
-          gatewayPassword: opts.password as string | undefined,
           defaultSessionKey: opts.session as string | undefined,
           defaultSessionLabel: opts.sessionLabel as string | undefined,
           requireExistingSession: Boolean(opts.requireExisting),

@@ -49,14 +49,10 @@ function parseDaysOption(raw: unknown, fallback = 30): number {
 
 function resolveGatewayRpcOptions<T extends { token?: string; password?: string }>(
   opts: T,
-  command?: Command,
+  _command?: Command,
 ): T {
-  const parentToken = inheritOptionFromParent<string>(command, "token");
-  const parentPassword = inheritOptionFromParent<string>(command, "password");
   return {
     ...opts,
-    token: opts.token ?? parentToken,
-    password: opts.password ?? parentPassword,
   };
 }
 
@@ -193,8 +189,6 @@ export function registerGatewayCli(program: Command) {
     .option("--ssh <target>", "SSH target for remote gateway tunnel (user@host or user@host:port)")
     .option("--ssh-identity <path>", "SSH identity file path")
     .option("--ssh-auto", "Try to derive an SSH target from Bonjour discovery", false)
-    .option("--token <token>", "Gateway token (applies to all probes)")
-    .option("--password <password>", "Gateway password (applies to all probes)")
     .option("--timeout <ms>", "Overall probe budget in ms", "3000")
     .option("--json", "Output JSON", false)
     .action(async (opts, command) => {

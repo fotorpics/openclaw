@@ -14,7 +14,6 @@ export type GatewayRpcOpts = {
 export function addGatewayClientOptions(cmd: Command) {
   return cmd
     .option("--url <url>", "Gateway WebSocket URL (defaults to gateway.remote.url when configured)")
-    .option("--token <token>", "Gateway token (if required)")
     .option("--timeout <ms>", "Timeout in ms", "30000")
     .option("--expect-final", "Wait for final response (agent)", false);
 }

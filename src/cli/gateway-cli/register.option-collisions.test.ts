@@ -42,8 +42,6 @@ vi.mock("./call.js", () => ({
   gatewayCallOpts: (cmd: Command) =>
     cmd
       .option("--url <url>", "Gateway WebSocket URL")
-      .option("--token <token>", "Gateway token")
-      .option("--password <password>", "Gateway password")
       .option("--timeout <ms>", "Timeout in ms", "10000")
       .option("--expect-final", "Wait for final response (agent)", false)
       .option("--json", "Output JSON", false),
@@ -52,10 +50,7 @@ vi.mock("./call.js", () => ({
 }));
 
 vi.mock("./run.js", () => ({
-  addGatewayRunCommand: (cmd: Command) =>
-    cmd
-      .option("--token <token>", "Gateway token")
-      .option("--password <password>", "Gateway password"),
+  addGatewayRunCommand: (cmd: Command) => cmd,
 }));
 
 vi.mock("../daemon-cli.js", () => ({
@@ -125,38 +120,31 @@ describe("gateway register option collisions", () => {
     gatewayStatusCommand.mockClear();
   });
 
-  it("forwards --token to gateway call when parent and child option names collide", async () => {
+  it("no longer forwards --token to gateway call", async () => {
     const { registerGatewayCli } = await import("./register.js");
     const program = new Command();
+    program.exitOverride();
+    program.configureOutput({ writeErr: () => {} });
     registerGatewayCli(program);
 
-    await program.parseAsync(["gateway", "call", "health", "--token", "tok_call", "--json"], {
-      from: "user",
-    });
-
-    expect(callGatewayCli).toHaveBeenCalledWith(
-      "health",
-      expect.objectContaining({
-        token: "tok_call",
+    await expect(
+      program.parseAsync(["gateway", "call", "health", "--token", "tok_call", "--json"], {
+        from: "user",
       }),
-      {},
-    );
+    ).rejects.toThrow();
   });
 
-  it("forwards --token to gateway probe when parent and child option names collide", async () => {
+  it("no longer forwards --token to gateway probe", async () => {
     const { registerGatewayCli } = await import("./register.js");
     const program = new Command();
+    program.exitOverride();
+    program.configureOutput({ writeErr: () => {} });
     registerGatewayCli(program);
 
-    await program.parseAsync(["gateway", "probe", "--token", "tok_probe", "--json"], {
-      from: "user",
-    });
-
-    expect(gatewayStatusCommand).toHaveBeenCalledWith(
-      expect.objectContaining({
-        token: "tok_probe",
+    await expect(
+      program.parseAsync(["gateway", "probe", "--token", "tok_probe", "--json"], {
+        from: "user",
       }),
-      defaultRuntime,
-    );
+    ).rejects.toThrow();
   });
 });
