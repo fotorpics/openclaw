@@ -43,6 +43,8 @@ import {
   truncateMiddle,
 } from "./bash-tools.shared.js";
 import { assertSandboxPath } from "./sandbox-paths.js";
+import { callGatewayTool } from "./tools/gateway.js";
+import { listNodes, resolveNodeIdFromList } from "./tools/nodes-utils.js";
 
 export type { BashSandboxConfig } from "./bash-tools.shared.js";
 export type {
@@ -92,6 +94,8 @@ async function validateScriptFileForShellBleed(params: {
   // Best-effort: only validate if file exists and is reasonably small.
   let stat: { isFile(): boolean; size: number };
   try {
+    // SECURITY: assertSandboxPath ensures the target script is within the allowed workdir boundary.
+    // This prevents path traversal disclosure when analyzing scripts for shell bleed.
     await assertSandboxPath({
       filePath: absPath,
       cwd: params.workdir,

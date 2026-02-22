@@ -1,11 +1,12 @@
 import { execFileSync, execSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 import type { OAuthCredentials, OAuthProvider } from "@mariozechner/pi-ai";
 import { loadJsonFile, saveJsonFile } from "../infra/json-file.js";
 import { createSubsystemLogger } from "../logging/subsystem.js";
-import { resolveUserPath } from "../utils.js";
+import { resolveConfigDir, resolveUserPath } from "../utils.js";
 
 const log = createSubsystemLogger("agents/auth-profiles");
 
@@ -129,8 +130,18 @@ function resolveCodexCliAuthPath() {
 }
 
 function resolveCodexHomePath() {
-  const configured = process.env.CODEX_HOME;
+  const configured = process.env.CODEX_HOME?.trim();
   const home = configured ? resolveUserPath(configured) : resolveUserPath("~/.codex");
+
+  // SECURITY: Prevent traversal to sensitive system files.
+  // CODEX_HOME must be within the user's home or OpenClaw state directory.
+  const allowedRoots = [os.homedir(), resolveConfigDir()];
+  const isAllowed = allowedRoots.some((root) => home.startsWith(root));
+  if (configured && !isAllowed) {
+    log.warn("ignoring unsafe CODEX_HOME path", { path: home });
+    return resolveUserPath("~/.codex");
+  }
+
   try {
     return fs.realpathSync.native(home);
   } catch {

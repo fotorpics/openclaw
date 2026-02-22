@@ -16,22 +16,16 @@ function resolveInstallOptions(
 ): DaemonInstallOptions {
   const parentForce = inheritOptionFromParent<boolean>(command, "force");
   const parentPort = inheritOptionFromParent<string>(command, "port");
-  const parentToken = inheritOptionFromParent<string>(command, "token");
   return {
     ...cmdOpts,
     force: Boolean(cmdOpts.force || parentForce),
     port: cmdOpts.port ?? parentPort,
-    token: cmdOpts.token ?? parentToken,
   };
 }
 
-function resolveRpcOptions(cmdOpts: GatewayRpcOpts, command?: Command): GatewayRpcOpts {
-  const parentToken = inheritOptionFromParent<string>(command, "token");
-  const parentPassword = inheritOptionFromParent<string>(command, "password");
+function resolveRpcOptions(cmdOpts: GatewayRpcOpts, _command?: Command): GatewayRpcOpts {
   return {
     ...cmdOpts,
-    token: cmdOpts.token ?? parentToken,
-    password: cmdOpts.password ?? parentPassword,
   };
 }
 
@@ -40,8 +34,6 @@ export function addGatewayServiceCommands(parent: Command, opts?: { statusDescri
     .command("status")
     .description(opts?.statusDescription ?? "Show gateway service status + probe the Gateway")
     .option("--url <url>", "Gateway WebSocket URL (defaults to config/remote/local)")
-    .option("--token <token>", "Gateway token (if required)")
-    .option("--password <password>", "Gateway password (password auth)")
     .option("--timeout <ms>", "Timeout in ms", "10000")
     .option("--no-probe", "Skip RPC probe")
     .option("--deep", "Scan system-level services", false)
@@ -60,7 +52,6 @@ export function addGatewayServiceCommands(parent: Command, opts?: { statusDescri
     .description("Install the Gateway service (launchd/systemd/schtasks)")
     .option("--port <port>", "Gateway port")
     .option("--runtime <runtime>", "Daemon runtime (node|bun). Default: node")
-    .option("--token <token>", "Gateway token (token auth)")
     .option("--force", "Reinstall/overwrite if already installed", false)
     .option("--json", "Output JSON", false)
     .action(async (cmdOpts, command) => {

@@ -119,7 +119,16 @@ export function resolveWorkdir(workdir: string, warnings: string[]) {
   try {
     const stats = statSync(workdir);
     if (stats.isDirectory()) {
-      return workdir;
+      const resolved = path.resolve(workdir);
+      const isSafe =
+        resolved.startsWith(fallback) ||
+        resolved.startsWith(path.resolve(process.cwd())) ||
+        resolved.startsWith(homedir());
+      if (isSafe) {
+        return resolved;
+      }
+      warnings.push(`Security Warning: workdir "${workdir}" escapes safe boundaries; using "${fallback}".`);
+      return fallback;
     }
   } catch {
     // ignore, fallback below

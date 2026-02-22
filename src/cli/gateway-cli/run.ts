@@ -35,9 +35,7 @@ import {
 type GatewayRunOpts = {
   port?: unknown;
   bind?: unknown;
-  token?: unknown;
   auth?: unknown;
-  password?: unknown;
   tailscale?: unknown;
   tailscaleResetOnExit?: boolean;
   allowUnconfigured?: boolean;
@@ -57,9 +55,7 @@ const gatewayLog = createSubsystemLogger("gateway");
 const GATEWAY_RUN_VALUE_KEYS = [
   "port",
   "bind",
-  "token",
   "auth",
-  "password",
   "tailscale",
   "wsLog",
   "rawStreamPath",
@@ -178,12 +174,6 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
       return;
     }
   }
-  if (opts.token) {
-    const token = toOptionString(opts.token);
-    if (token) {
-      process.env.OPENCLAW_GATEWAY_TOKEN = token;
-    }
-  }
   const authModeRaw = toOptionString(opts.auth);
   const authMode: GatewayAuthMode | null =
     authModeRaw === "token" || authModeRaw === "password" ? authModeRaw : null;
@@ -202,8 +192,6 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
     defaultRuntime.exit(1);
     return;
   }
-  const passwordRaw = toOptionString(opts.password);
-  const tokenRaw = toOptionString(opts.token);
 
   const snapshot = await readConfigFileSnapshot().catch(() => null);
   const configExists = snapshot?.exists ?? fs.existsSync(CONFIG_PATH);
@@ -239,17 +227,8 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
   }
 
   const miskeys = extractGatewayMiskeys(snapshot?.parsed);
-  const authOverride =
-    authMode || passwordRaw || tokenRaw || authModeRaw
-      ? {
-          ...(authMode ? { mode: authMode } : {}),
-          ...(tokenRaw ? { token: tokenRaw } : {}),
-          ...(passwordRaw ? { password: passwordRaw } : {}),
-        }
-      : undefined;
   const resolvedAuth = resolveGatewayAuth({
     authConfig: cfg.gateway?.auth,
-    authOverride,
     env: process.env,
     tailscaleMode: tailscaleMode ?? cfg.gateway?.tailscale?.mode ?? "off",
   });
@@ -270,11 +249,24 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
       '"gateway.remote.token" is for remote CLI calls; it does not enable local gateway auth.',
     );
   }
+  if (resolvedAuthMode === "token" && !hasToken && !resolvedAuth.allowTailscale) {
+    defaultRuntime.error(
+      [
+        "Gateway auth is set to token, but no token is configured.",
+        'Set gateway.auth.token (or OPENCLAW_GATEWAY_TOKEN) in config or env.',
+        ...authHints,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    );
+    defaultRuntime.exit(1);
+    return;
+  }
   if (resolvedAuthMode === "password" && !hasPassword) {
     defaultRuntime.error(
       [
         "Gateway auth is set to password, but no password is configured.",
-        "Set gateway.auth.password (or OPENCLAW_GATEWAY_PASSWORD), or pass --password.",
+        'Set gateway.auth.password (or OPENCLAW_GATEWAY_PASSWORD) in config or env.',
         ...authHints,
       ]
         .filter(Boolean)
@@ -297,7 +289,7 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
     defaultRuntime.error(
       [
         `Refusing to bind gateway to ${bind} without auth.`,
-        "Set gateway.auth.token/password (or OPENCLAW_GATEWAY_TOKEN/OPENCLAW_GATEWAY_PASSWORD) or pass --token/--password.",
+        "Set gateway.auth.token/password (or OPENCLAW_GATEWAY_TOKEN/OPENCLAW_GATEWAY_PASSWORD) in config or env.",
         ...authHints,
       ]
         .filter(Boolean)
@@ -306,13 +298,6 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
     defaultRuntime.exit(1);
     return;
   }
-  const tailscaleOverride =
-    tailscaleMode || opts.tailscaleResetOnExit
-      ? {
-          ...(tailscaleMode ? { mode: tailscaleMode } : {}),
-          ...(opts.tailscaleResetOnExit ? { resetOnExit: true } : {}),
-        }
-      : undefined;
 
   try {
     await runGatewayLoop({
@@ -320,8 +305,19 @@ async function runGatewayCommand(opts: GatewayRunOpts) {
       start: async () =>
         await startGatewayServer(port, {
           bind,
-          auth: authOverride,
-          tailscale: tailscaleOverride,
+          auth:
+            authMode || authModeRaw
+              ? {
+                  mode: authMode ?? undefined,
+                }
+              : undefined,
+          tailscale:
+            tailscaleMode || opts.tailscaleResetOnExit
+              ? {
+                  mode: tailscaleMode ?? undefined,
+                  resetOnExit: Boolean(opts.tailscaleResetOnExit),
+                }
+              : undefined,
         }),
     });
   } catch (err) {
@@ -359,12 +355,7 @@ export function addGatewayRunCommand(cmd: Command): Command {
       "--bind <mode>",
       'Bind mode ("loopback"|"lan"|"tailnet"|"auto"|"custom"). Defaults to config gateway.bind (or loopback).',
     )
-    .option(
-      "--token <token>",
-      "Shared token required in connect.params.auth.token (default: OPENCLAW_GATEWAY_TOKEN env if set)",
-    )
     .option("--auth <mode>", 'Gateway auth mode ("token"|"password")')
-    .option("--password <password>", "Password for auth mode=password")
     .option("--tailscale <mode>", 'Tailscale exposure mode ("off"|"serve"|"funnel")')
     .option(
       "--tailscale-reset-on-exit",

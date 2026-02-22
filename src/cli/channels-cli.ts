@@ -22,10 +22,7 @@ const optionNamesAdd = [
   "channel",
   "account",
   "name",
-  "token",
   "tokenFile",
-  "botToken",
-  "appToken",
   "signalNumber",
   "cliPath",
   "dbPath",
@@ -42,8 +39,6 @@ const optionNamesAdd = [
   "useEnv",
   "homeserver",
   "userId",
-  "accessToken",
-  "password",
   "deviceName",
   "initialSyncLimit",
   "ship",
@@ -167,10 +162,7 @@ export function registerChannelsCli(program: Command) {
     .option("--channel <name>", `Channel (${channelNames})`)
     .option("--account <id>", "Account id (default when omitted)")
     .option("--name <name>", "Display name for this account")
-    .option("--token <token>", "Bot token (Telegram/Discord)")
     .option("--token-file <path>", "Bot token file (Telegram)")
-    .option("--bot-token <token>", "Slack bot token (xoxb-...)")
-    .option("--app-token <token>", "Slack app token (xapp-...)")
     .option("--signal-number <e164>", "Signal account number (E.164)")
     .option("--cli-path <path>", "CLI path (signal-cli or imsg)")
     .option("--db-path <path>", "iMessage database path")
@@ -186,8 +178,6 @@ export function registerChannelsCli(program: Command) {
     .option("--audience <value>", "Google Chat audience value (app URL or project number)")
     .option("--homeserver <url>", "Matrix homeserver URL")
     .option("--user-id <id>", "Matrix user ID")
-    .option("--access-token <token>", "Matrix access token")
-    .option("--password <password>", "Matrix password")
     .option("--device-name <name>", "Matrix device name")
     .option("--initial-sync-limit <n>", "Matrix initial sync limit")
     .option("--ship <ship>", "Tlon ship name (~sampel-palnet)")

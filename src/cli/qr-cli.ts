@@ -13,8 +13,6 @@ type QrCliOptions = {
   remote?: boolean;
   url?: string;
   publicUrl?: string;
-  token?: string;
-  password?: string;
 };
 
 function renderQrAscii(data: string): Promise<string> {
@@ -45,40 +43,15 @@ export function registerQrCli(program: Command) {
     )
     .option("--url <url>", "Override gateway URL used in the setup payload")
     .option("--public-url <url>", "Override gateway public URL used in the setup payload")
-    .option("--token <token>", "Override gateway token for setup payload")
-    .option("--password <password>", "Override gateway password for setup payload")
     .option("--setup-code-only", "Print only the setup code", false)
     .option("--no-ascii", "Skip ASCII QR rendering")
     .option("--json", "Output JSON", false)
     .action(async (opts: QrCliOptions) => {
       try {
-        if (opts.token && opts.password) {
-          throw new Error("Use either --token or --password, not both.");
-        }
+        const cfg = loadConfig();
 
-        const loaded = loadConfig();
-        const cfg = {
-          ...loaded,
-          gateway: {
-            ...loaded.gateway,
-            auth: {
-              ...loaded.gateway?.auth,
-            },
-          },
-        };
-
-        const token = typeof opts.token === "string" ? opts.token.trim() : "";
-        const password = typeof opts.password === "string" ? opts.password.trim() : "";
         const wantsRemote = opts.remote === true;
-        if (token) {
-          cfg.gateway.auth.mode = "token";
-          cfg.gateway.auth.token = token;
-        }
-        if (password) {
-          cfg.gateway.auth.mode = "password";
-          cfg.gateway.auth.password = password;
-        }
-        if (wantsRemote && !token && !password) {
+        if (wantsRemote) {
           const remoteToken =
             typeof cfg.gateway?.remote?.token === "string" ? cfg.gateway.remote.token.trim() : "";
           const remotePassword =
